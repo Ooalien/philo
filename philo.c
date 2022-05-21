@@ -6,7 +6,7 @@
 /*   By: abayar <abayar@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/21 21:59:53 by abayar            #+#    #+#             */
-/*   Updated: 2022/05/21 17:28:45 by abayar           ###   ########.fr       */
+/*   Updated: 2022/05/21 23:22:55 by abayar           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,39 +23,73 @@ size_t	timenow(void)
 	return (t);
 }
 
-void	eating_sleeping(t_data *data)
+void	to_do(t_philo *philo, int index)
 {
-	usleep(data->t_eat * 1000);
-	data->last_meal = data->start - timenow();
-	usleep(data->t_sleep * 1000);
-	//printf("8-------------8\n");
+	if (index == 1)
+	{
+		philo->eating = 1;
+		philo->last_meal = timenow();
+		usleep(philo->data->t_eat * 1000);
+		if (++philo->meals >= philo->data->n_meal && philo->data->n_meal != 0)
+			philo->data->end++;
+	}
+	if (index == 2)
+	{
+		usleep(philo->data->t_sleep * 1000);
+	}
 }
 
-void	take_fork(t_data *data)
+void	print(t_philo *philo, int index)
 {
-	//usleep(2000);
-	pthread_mutex_lock(&data->fork[data->i]);
-	pthread_mutex_lock(&data->fork[(data->i + 1) % data->nph]);
-	eating_sleeping(data);
-	printf("%d---------%d\n",data->i,(data->i + 1) % data->nph);
-	pthread_mutex_unlock(&data->fork[data->i]);
-	pthread_mutex_unlock(&data->fork[(data->i + 1) % data->nph]);
+	pthread_mutex_lock(&philo->data->print);
+	if (index == 0)
+	{
+		printf("%zu %d has taken a fork\n", timenow(), philo->id);
+	}
+	else if (index == 1)
+	{
+		printf("%zu %d is eating\n", timenow(), philo->id);
+	}
+	else if (index == 2)
+	{
+		printf("%zu %d is sleeping\n", timenow(), philo->id);
+	}
+	else if (index == 3)
+	{
+		printf("%zu %d is thinking\n", timenow(), philo->id);
+	}
+	pthread_mutex_unlock(&philo->data->print);
+	to_do(philo, index);
 }
 
 void	*routine(void *arg)
 {
-	t_data *data;
+	t_philo	*ph;
 	
-	data = (t_data *)arg;
-
+	ph = (t_philo *)arg;
+	//usleep(1500);
+	while (1)
+	{
+		pthread_mutex_lock(&ph->data->fork[ph->id - 1]);
+		print(ph, 0);
+		pthread_mutex_lock(&ph->data->fork[ph->id % ph->data->nph]);
+		print(ph, 0);
+		print(ph,1);
+		pthread_mutex_unlock(&ph->data->fork[ph->id - 1]);
+		pthread_mutex_unlock(&ph->data->fork[ph->id % ph->data->nph]);
+		print(ph, 2);
+		print(ph, 3);
+		//pthread_mutex_lock(&ph->data->print);
+	}
 	//usleep(200);
-	printf("hello %d time is = %zu\n", data->i, timenow() - data->start);
-	take_fork(data);
+	//printf("hello %d time is = %zu\n", , timenow());
+	//take_fork(data);
 	return (NULL);
 }
 
 void	read_data(int ac, char **av, t_data *data)
 {
+	data->end = 0;
 	data->nph = ft_atoi(av[1]);
 	data->t_die = ft_atoi(av[2]);
 	data->t_eat = ft_atoi(av[3]);
@@ -70,35 +104,95 @@ void	read_data(int ac, char **av, t_data *data)
 	}
 }
 
-void	creat_philos(pthread_t *th, int x, t_data *data)
+void	init_mutex(int x, t_data *data)
 {
 	int	i;
-	
-	data->i = 0;
-	data->fork = malloc(sizeof(pthread_mutex_t) * x);
-	th = malloc(sizeof(pthread_t) * x);
-	if (!th)
-	{
-		write(2, "malloc fail\n", 12);
-		exit(1);
-	}
+
 	i = 0;
 	while(i < x)
 	{
 		pthread_mutex_init(&data->fork[i], NULL);
 		i++;
 	}
-	data->start = timenow();
-	while (data->i < x)
+	pthread_mutex_init(&data->print, NULL);
+}
+
+void	even_philos(int i, t_data *data, t_philo *philo)
+{
+	while (i < data->nph)
 	{
-		pthread_create(&th[data->i], NULL, routine, data);
-		usleep(200);
-		data->i++;
+		if ((i + 1) % 2 == 0)
+		{
+			philo[i].id = i + 1;
+			philo[i].meals = 0;
+			philo[i].data = data;
+			philo[i].eating = 0;
+			
+			pthread_create(&philo[i].ph, NULL, routine, &philo[i]);
+		}
+		i++;
 	}
+}
+
+void	odd_philos(int i, t_data *data, t_philo *philo)
+{
+	while (i < data->nph)
+	{
+		if ((i + 1) % 2 == 1)
+		{
+			philo[i].id = i + 1;
+			philo[i].meals = 0;
+			philo[i].data = data;
+			philo[i].eating = 0;
+			
+			pthread_create(&philo[i].ph, NULL, routine, (void *)&philo[i]);
+		}
+		i++;
+	}
+}
+
+void	creat_philos(t_philo *philo, int x, t_data *data)
+{
+	int	i;
+	
+	data->i = 0;
+	philo = (t_philo *)malloc(sizeof(t_philo) * x);
+	data->fork = malloc(sizeof(pthread_mutex_t) * x);
+	//th = malloc(sizeof(pthread_t) * x);
+	if (!philo || !data->fork)
+	{
+		write(2, "malloc fail\n", 12);
+		exit(1);
+	}
+	init_mutex(x, data);
+	i = 0;
+	odd_philos(i, data, philo);
+	usleep(1000);
+	i = 0;
+	even_philos(i, data, philo);
+	// while(i < x)
+	// {
+	// 	pthread_mutex_init(&data->fork[i], NULL);
+	// 	i++;
+	// }
+	// while (i < x)
+	// {
+	// 	if ((i + 1) % 2 == 1)
+	// 	{
+	// 		philo[i].id = i + 1;
+	// 		philo[i].n_meal = 0;
+	// 		philo[i].data = data;
+	// 		philo[i].eating = 0;
+			
+	// 		pthread_create(&philo[i].ph, NULL, routine, &philo[i]);
+	// 	}
+	// //	usleep(1000);
+	// 	i++;
+	// }
 	i = 0;
 	while (i < x)
 	{
-		pthread_join(th[i], NULL);
+		pthread_join(philo[i].ph, NULL);
 		i++;
 	}
 	i = 0;
@@ -107,17 +201,59 @@ void	creat_philos(pthread_t *th, int x, t_data *data)
 		pthread_mutex_destroy(&data->fork[i]);
 		i++;
 	}
+	pthread_mutex_destroy(&data->print);
+}
+
+void	check_dead(t_philo *philo, t_data *data)
+{
+	int	i;
+
+	i = 0;
+	while (1)
+	{
+		while(i < data->nph)
+		{
+			if (timenow() - philo[i].last_meal >= data->t_die && philo[i].eating == 0)
+			{
+				pthread_mutex_lock(&philo->data->print);
+				printf("%zu %d died\n", timenow(), i + 1);
+				return ;
+			}
+			i++;
+		}
+		usleep(600);
+	}
+}
+
+void	destroy(int x, t_philo *philo, t_data *data)
+{
+	int	i;
+	i = 0;
+	while (i < x)
+	{
+		printf("%d \n",i);
+		pthread_join(philo[i].ph, NULL);
+		i++;
+	}
+	i = 0;
+	while(i < x)
+	{
+		pthread_mutex_destroy(&data->fork[i]);
+		i++;
+	}
+	pthread_mutex_destroy(&data->print);
 }
 
 int	main(int ac, char **av)
 {
 	t_data	*data;
+	t_philo	*philo;
 
 	data = malloc(sizeof(t_data *));
-	data->nph = 0;
-	data->t_die = 0;
-	data->t_eat = 0;
-	data->t_sleep = 0;
+	// data->nph = 0;
+	// data->t_die = 0;
+	// data->t_eat = 0;
+	// data->t_sleep = 0;
 //	data->start = 0;
 	if (ac == 5 || ac == 6)
 	{
@@ -127,7 +263,10 @@ int	main(int ac, char **av)
 			return (1);
 		}
 		read_data(ac, av, data);
-		creat_philos(data->th, data->nph, data);                                                          
+		creat_philos(philo, data->nph, data);
+		//check_dead(philo, data);
+		//printf("%d\n", philo[0].id);
+		//destroy(data->nph, philo, data);
 	}
 	return (0);
 }
