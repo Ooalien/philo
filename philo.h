@@ -6,7 +6,7 @@
 /*   By: abayar <abayar@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/10 16:51:51 by abayar            #+#    #+#             */
-/*   Updated: 2022/05/21 22:10:53 by abayar           ###   ########.fr       */
+/*   Updated: 2022/05/23 18:56:32 by abayar           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 
 typedef struct s_data
 {
-	//pthread_t		*th;
+	pthread_mutex_t	*dead;
 	pthread_mutex_t	*fork;
 	pthread_mutex_t	print;
 	int				nph;
@@ -38,7 +38,7 @@ typedef struct s_philo
 	pthread_t	ph;
 	t_data		*data;
 	int			id;
-	int			last_meal;
+	size_t			last_meal;
 	int			meals;
 	int			eating;
 	size_t		start;
