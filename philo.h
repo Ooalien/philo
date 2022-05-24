@@ -6,7 +6,7 @@
 /*   By: abayar <abayar@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/10 16:51:51 by abayar            #+#    #+#             */
-/*   Updated: 2022/05/23 18:56:32 by abayar           ###   ########.fr       */
+/*   Updated: 2022/05/24 03:55:44 by abayar           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,10 @@ typedef struct s_philo
 	pthread_t	ph;
 	t_data		*data;
 	int			id;
-	size_t			last_meal;
+	size_t		last_meal;
 	int			meals;
 	int			eating;
 	size_t		start;
-	
 }	t_philo;
 
 int	is_num(char *s);
