@@ -6,7 +6,7 @@
 /*   By: abayar <abayar@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/21 21:59:53 by abayar            #+#    #+#             */
-/*   Updated: 2022/05/23 19:16:52 by abayar           ###   ########.fr       */
+/*   Updated: 2022/05/24 03:08:13 by abayar           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,9 +98,10 @@ void	check_dead(t_philo *philo, t_data *data)
 			if (!philo[i].eating)
 			{
 				pthread_mutex_lock(&philo->data->dead[i]);
-				printf("_____________philo nbr %d_______________\n               Lat meal = %lu \n____________time now = %lu_____________\n", i+1, timenow() - philo[i].last_meal, timenow());
-				if (timenow() - philo[i].last_meal >= data->t_die)
+				//printf("_____________philo nbr %d_______________\n               Lat meal = %lu \n____________time now = %lu_____________\n", i+1, timenow() - philo->last_meal, timenow());
+				if (timenow() - philo->last_meal >= data->t_die)
 				{
+					//printf("%lu ------------ %d\n", philo->last_meal, data->t_die);
 					pthread_mutex_lock(&philo->data->print);
 					printf("%zu %d died\n", timenow(), i + 1);
 					return ;
