@@ -6,7 +6,7 @@
 #    By: abayar <abayar@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/05/25 21:20:50 by abayar            #+#    #+#              #
-#    Updated: 2022/05/25 23:19:57 by abayar           ###   ########.fr        #
+#    Updated: 2022/05/26 00:06:25 by abayar           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ NAME = philoo
 
 NAMEB = philoo_bonus
 
-FLAGS = gcc -Wall -Wextra -Werror -pthread# -fsanitize=thread
+FLAGS = gcc -Wall -Wextra -Werror -pthread -fsanitize=thread
 
 all : ${NAME}
 
